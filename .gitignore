@@ -1,0 +1,9 @@
+# venv ignores
+bin/
+include/
+lib/
+local/
+env/
+
+# local ignores
+dockerfiles/fig.yml

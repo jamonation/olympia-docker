@@ -1,0 +1,3 @@
+[submodule "olympia"]
+	path = olympia
+	url = https://github.com/mozilla/olympia.git
