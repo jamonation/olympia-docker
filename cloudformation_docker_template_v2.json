@@ -1,0 +1,433 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS CloudFormation Olympia Docker Dev Template: Create an Olympia stack using a single EC2 instance and a collection of docker containers for RabbitMQ, Memcached, ElasticSearch and MySQL. This template demonstrates using the AWS CloudFormation bootstrap scripts to install Ansible, which then provisions the VM to set selinux to permissive mode, installs Docker and adds the default centos user to the docker group.",
+    "Parameters": {
+        "KeyName": {
+            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+        },
+        "SshIp" : {
+          "Type" : "String",
+          "Default" : "0.0.0.0/0",
+          "Description" : "IP addresses with direct SSH access (public subnet)"
+        },
+        "InstanceType": {
+            "Description": "WebServer EC2 instance type",
+            "Type": "String",
+            "Default": "t2.small",
+            "AllowedValues": [
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "m1.small",
+                "m1.medium",
+                "m1.large",
+                "m1.xlarge",
+                "m2.xlarge",
+                "m2.2xlarge",
+                "m2.4xlarge",
+                "m3.medium",
+                "m3.large",
+                "m3.xlarge",
+                "m3.2xlarge",
+                "c1.medium",
+                "c1.xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c3.4xlarge",
+                "c3.8xlarge",
+                "g2.2xlarge",
+                "r3.large",
+                "r3.xlarge",
+                "r3.2xlarge",
+                "r3.4xlarge",
+                "r3.8xlarge",
+                "i2.xlarge",
+                "i2.2xlarge",
+                "i2.4xlarge",
+                "i2.8xlarge",
+                "hi1.4xlarge",
+                "hs1.8xlarge",
+                "cr1.8xlarge",
+                "cc2.8xlarge",
+                "cg1.4xlarge"
+            ],
+            "ConstraintDescription": "must be a valid EC2 instance type."
+        }
+    },
+    "Mappings": {
+        "SubnetConfig": {
+            "Public": {
+                "CIDR": "10.0.0.0/24"
+            },
+            "VPC": {
+                "CIDR": "10.0.0.0/16"
+            }
+        },
+        "AWSInstanceType2Arch": {            "t2.micro": {
+                "Arch": "HVM64"            },
+            "t2.small": {                "Arch": "HVM64"            },
+            "t2.medium": {                "Arch": "HVM64"            },
+            "m3.medium": {                "Arch": "HVM64"
+            },
+            "m3.large": {                "Arch": "HVM64"
+            },
+                        "m3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.large": {
+                "Arch": "HVM64"
+            },
+            "c3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.large": {
+                "Arch": "HVM64"
+            },
+            "r3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "hi1.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "hs1.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "cr1.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "cc2.8xlarge": {
+                "Arch": "HVM64"
+            }
+        },
+        "AWSRegionArch2AMI": {
+            "us-east-1": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "ami-96a818fe",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "us-west-2": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "ami-c7d092f7",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "us-west-1": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "ami-6bcfc42e",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "eu-west-1": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "ami-e4ff5c93",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-southeast-1": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "ami-aea582fc",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-northeast-1": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "ami-89634988",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-southeast-2": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "ami-bd523087",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "sa-east-1": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "ami-bf9520a2",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "cn-north-1": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "NOT_SUPPORTED",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "eu-central-1": {
+                "PV64": "NOT_SUPPORTED",
+                "HVM64": "NOT_SUPPORTED",
+                "HVMG2": "NOT_SUPPORTED"
+            }
+        }
+    },
+    "Resources": {
+        "InstanceSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "OlympiaVPC"
+                },
+                "GroupDescription": "Olympia - EC2 instances: dev HTTP and SSH access",
+                "SecurityGroupIngress": [
+                    {
+                        "ToPort": "8000",
+                        "FromPort": "8000",
+                        "CidrIp": {
+                            "Ref": "0.0.0.0/0"
+                        },
+                        "IpProtocol": "tcp"
+                    },
+                    {
+                        "ToPort": "22",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "CidrIp": {
+                            "Ref": "SshIp"
+                        }
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Value": "Olympia EC2",
+                        "Key": "Name"
+                    }
+                ]
+            }
+        },
+        "AttachGateway": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "OlympiaVPC"
+                },
+                "InternetGatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "EIP1": {
+            "Type": "AWS::EC2::EIP",
+            "Properties": {
+                "InstanceId": {
+                    "Ref": "Olympia1"
+                },
+                "Domain": "vpc"
+            }
+        },
+        "PublicSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "OlympiaVPC"
+                },
+                "CidrBlock": {
+                    "Fn::FindInMap": [
+                        "SubnetConfig",
+                        "Public",
+                        "CIDR"
+                    ]
+                }
+            }
+        },
+        "ELBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "OlympiaVPC"
+                },
+                "SecurityGroupEgress": [
+                    {
+                        "ToPort": "8000",
+                        "FromPort": "8000",
+                        "IpProtocol": "tcp",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ],
+                "GroupDescription": "Olympia dev HTTP access",
+                "SecurityGroupIngress": [
+                    {
+                        "ToPort": "8000",
+                        "FromPort": "8000",
+                        "IpProtocol": "tcp",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "OlympiaLoadBalancer": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties": {
+                "HealthCheck": {
+                    "Interval": "30",
+                    "Target": "HTTP:80/index.html",
+                    "Timeout": "5",
+                    "UnhealthyThreshold": "5",
+                    "HealthyThreshold": "3"
+                },
+                "Subnets": [
+                    {
+                        "Ref": "PublicSubnet"
+                    }
+                ],
+                "Instances": [
+                    {
+                        "Ref": "Olympia1"
+                    }
+                ],
+                "Listeners": [
+                    {
+                        "InstancePort": "8000",
+                        "Protocol": "HTTP",
+                        "LoadBalancerPort": "8000"
+                    }
+                ],
+                "SecurityGroups": [
+                    {
+                        "Ref": "ELBSecurityGroup"
+                    }
+                ]
+            }
+        },
+        "PublicRoute": {
+            "DependsOn": "AttachGateway",
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "GatewayId": {
+                    "Ref": "InternetGateway"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                }
+            }
+        },
+        "Olympia1": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "SecurityGroupIds": [
+                    {
+                        "Ref": "InstanceSecurityGroup"
+                    }
+                ],
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "AWSRegionArch2AMI",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "HVM64"
+                    ]
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "SubnetId": {
+                    "Ref": "PublicSubnet"
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "\n",
+                            [
+                                "#!/bin/bash",
+                                "# Grab epel for ansible",
+                                "rpm -i http://download.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-2.noarch.rpm",
+                                "# Install ansible",
+                                "yum install -y ansible",
+                                "# Get the ansible playbook for this demo environment",
+                                "curl -o https://s3-eu-west-1.amazonaws.com/cf-templates-1jh6g2vv431pg-eu-west-1/playbook.yml",
+                                "# run the playbook",
+                                "ansible-playbook playbook.yml"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "OlympiaVPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": {
+                    "Fn::FindInMap": [
+                        "SubnetConfig",
+                        "VPC",
+                        "CIDR"
+                    ]
+                }
+            }
+        },
+        "InternetGateway": {
+            "Type": "AWS::EC2::InternetGateway"
+        },
+        "PublicRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "OlympiaVPC"
+                }
+            }
+        },
+        "PublicSubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet"
+                },
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "WebsiteURL": {
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "http://",
+                        {
+                            "Fn::GetAtt": [
+                                "Olympia1",
+                                "PublicDnsName"
+                            ]
+                        },
+                        ":8000"
+                    ]
+                ]
+            },
+            "Description": "Olympia Dev Site"
+        }
+    }
+}

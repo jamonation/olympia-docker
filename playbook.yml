@@ -1,0 +1,48 @@
+---
+# provision an ec2 t2.small instance with olympia-docker requirements
+
+- hosts: 127.0.0.1
+  # http://docs.ansible.com/playbooks_delegation.html#local-playbooks for local info
+  connection: local
+
+  # use these vars for olympia
+  vars:
+    - project_name: olympia
+    - project_root: /home/centos/olympia-docker
+    - project_repo: https://github.com/jamonation/olympia-docker.git
+    - olympia_repo: https://github.com/mozilla/olympia.git
+    - system_packages:
+      - git
+      - docker
+      - python-pip
+      - python-virtualenv
+
+  tasks:
+  - name: set setlinux permissive
+    shell: setenforce 0
+
+  - name: install packages
+    yum: pkg={{ item }} state=installed
+    with_items: system_packages
+
+  - name: git docker clone
+    git: repo={{project_repo}} dest={{project_root}} version=master recursive=no
+
+  - name: git olympia clone
+    git: repo={{olympia_repo}} dest={{project_root}}/olympia version=master recursive=yes
+
+  - name: make virtualenv
+    shell: /usr/bin/virtualenv {{project_root}}
+
+  - name: install fig into venv
+    pip: name=fig virtualenv={{project_root}}
+
+  - name: change permissions
+    shell: chown -R centos:centos {{ project_root }}
+
+  - name: add centos to docker group
+    user: name=centos groups=docker append=yes
+
+  # don't use this for demo cloudformation, do a manual make to show the build process
+  #- name: make docker containers
+  #  shell: chdir={{project_root}}/dockerfiles source {{project_root}}/bin/activate && make  init_containers
