@@ -31,7 +31,6 @@ ENV PATH /opt/olympia/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/loc
 
 # Add a user with a home, uid 1000, shell /bin/bash etc.
 RUN useradd olympia -u 1000 -s /bin/bash -m
-RUN chown olympia:olympia /opt/olympia
 
 RUN ln -sf /usr/bin/nodejs /usr/local/bin/node
 ENV NODE_ENV /srv/www/olympia/node_modules
