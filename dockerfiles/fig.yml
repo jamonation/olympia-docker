@@ -1,0 +1,40 @@
+mysql:
+  image: mozilla/olympia_mysql
+  volumes_from:
+    - olympia_mysql_data
+  expose:
+    - "3306"
+
+elasticsearch:
+  image: mozilla/olympia_elasticsearch
+  volumes_from:
+    - olympia_elasticsearch_data
+  expose:
+    - "9200:9200"
+    - "9300:9300"
+
+rabbitmq:
+  image: mozilla/olympia_rabbitmq
+  volumes_from:
+    - olympia_rabbitmq_data
+  expose:
+    - "5672:5672"
+
+memcached:
+  image: mozilla/olympia_memcached
+  expose:
+    - "11211:11211"
+
+olympia:
+  image: mozilla/olympia_web
+  ports:
+    - "8000:8000"
+  links:
+    - mysql 
+    - elasticsearch
+    - rabbitmq
+    - memcached
+  volumes:
+    - /home/centos/olympia-docker/olympia:/srv/www/olympia
+    - /home/centos/olympia-docker/env:/opt/olympia
+  command: python manage.py runserver 0.0.0.0:8000
