@@ -7,3 +7,5 @@ env/
 
 # local ignores
 dockerfiles/fig.yml
+# ignore olympia, and don't make it a submodule
+olympia/
