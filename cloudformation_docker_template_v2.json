@@ -366,7 +366,7 @@
                                 "# Install ansible",
                                 "yum install -y ansible",
                                 "# Get the ansible playbook for this demo environment",
-                                "curl -o https://s3-eu-west-1.amazonaws.com/cf-templates-1jh6g2vv431pg-eu-west-1/playbook.yml",
+                                "curl -o https://s3-eu-west-1.amazonaws.com/olympia-docker/playbook.yml",
                                 "# run the playbook",
                                 "ansible-playbook playbook.yml"
                             ]
