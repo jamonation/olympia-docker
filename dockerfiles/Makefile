@@ -30,4 +30,5 @@ init_containers:
 	fig run mysql /usr/local/bin/provision_mysql.sh; fig stop
 	fig run rabbitmq /usr/local/bin/provision_rabbitmq.sh; fig stop
 	cp olympia_web/local_settings.py ../olympia/local_settings.py
+	fig run olympia virtualenv /opt/olympia
 	fig run olympia make full_init; fig stop
