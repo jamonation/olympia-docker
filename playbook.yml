@@ -43,6 +43,9 @@
   - name: add centos to docker group
     user: name=centos groups=docker append=yes
 
+  - name: start docker
+    service: name=docker state=started
+
   # don't use this for demo cloudformation, do a manual make to show the build process
   #- name: make docker containers
   #  shell: chdir={{project_root}}/dockerfiles source {{project_root}}/bin/activate && make  init_containers
