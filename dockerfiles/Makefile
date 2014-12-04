@@ -29,4 +29,5 @@ init_containers:
 	# do this in order, so that olympia app is guaranteed to have all external services available before provisioning
 	fig run mysql /usr/local/bin/provision_mysql.sh; fig stop
 	fig run rabbitmq /usr/local/bin/provision_rabbitmq.sh; fig stop
+	cp olympia_web/local_settings.py ../olympia/local_settings.py
 	fig run olympia make full_init; fig stop
